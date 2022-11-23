@@ -1,16 +1,15 @@
 {
   "name": "backend",
-  "version": "1.0.1",
+  "version": "1.0.0",
   "description": "",
   "main": "server.js",
   "scripts": {
-    "test": "mocha --recursive test",
-    "bump-version": "npm version patch"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "express": "^4.18.2",
-    "mongoose": "^6.7.2"
+    "mongoose": "^6.7.3"
   }
 }
