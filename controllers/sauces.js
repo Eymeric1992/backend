@@ -1,4 +1,5 @@
 const mongoose = require("mongoose")
+const { unlink } = require("fs")
 
 
 const productSchema = new mongoose.Schema({
@@ -22,38 +23,40 @@ function getSauces(req, res) {
     //authUser(req, res)
 
     console.log("on est dans getsauces")
-    Product.find({}).then(products => res.send(products))
+    Product.find().then(products => res.status(200).send(products)).catch(error => res.status(500).send(error))
     // res.send({ message: [{ sauce: "sauce1" }, { sauce: "sauce2" }] })
 
 }
-/*
-function creatSauces(req, res) {
-    console.log(__dirname)
-    const sauce = JSON.parse(req.body.sauce)
-    const { name, manufacturer, description, mainPepper, heat, userId } = sauce
-    console.log({ body: req.body.sauce })
-    console.log({ file: req.file })
-const imageUrl = /*req.file.destination + */ /*req.file.filename
 
-function makeImageUrl(req, imageUrl) {
-    return req.protocol + "://" + req.get("host") + "/image/" + imageUrl
+async function getSaucesById(req, res) {
+    try {
+        const { id } = req.params
+        const product = await Product.findById(id)
+        res.send(product)
+    }
+    catch (error) {
+        res.status(500).send(error)
+    }
 }
-    const product = new Product({
-        userId,
-        name,
-        manufacturer,
-        description,
-        mainPepper,
-        imageUrl: makeImageUrl(req, imageUrl),
-        heat,
-        likes: 0,
-        dislikes: 0,
-        usersLiked: [],
-        usersDisliked: [],
-    })
-    product.save().then((res) => console.log("produit enregistré", res)).catch(console.error) 
 
-}*/
+function DeleteSaucesById(req, res) {
+    const { id } = req.params
+
+    Product.findByIdAndDelete(id)
+        .then(deleteImage)
+        .then(product => res.send({ message: product }))
+        .catch(err => res.status(500).send({ message: err }))
+}
+
+function deleteImage(product) {
+    const imageUrl = product.imageUrl
+    const fileToDelete = imageUrl.split("/").at(-1)
+    unlink(`image/${fileToDelete}`, (err) => {
+        console.error("Probleme a la suppression de l'image", err)
+    })
+    return product
+}
+
 
 function makeImageUrl(req, fileName) {
     return req.protocol + "://" + req.get("host") + "/image/" + fileName
@@ -83,4 +86,4 @@ function creatSauces(req, res) {
         .catch((err) => res.status(500).send(err))
 }
 //Product.deleteMany({}).then(() => console.log("all removed"))
-module.exports = { getSauces, creatSauces }
+module.exports = { getSauces, creatSauces, getSaucesById, DeleteSaucesById }
