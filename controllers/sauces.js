@@ -1,5 +1,5 @@
 const mongoose = require("mongoose")
-const { unlink } = require("fs")
+const { unlink } = require("fs/promises")
 
 
 const productSchema = new mongoose.Schema({
@@ -41,10 +41,10 @@ async function getSaucesById(req, res) {
 
 function DeleteSaucesById(req, res) {
     const { id } = req.params
-
     Product.findByIdAndDelete(id)
-        .then(deleteImage)
-        .then(product => res.send({ message: product }))
+        .then(product => sendClientResponse(product, res))
+        .then((item) => deleteImage(item))
+        .then((res) => console.log('file deleted', res))
         .catch(err => res.status(500).send({ message: err }))
 }
 
@@ -56,7 +56,16 @@ function deleteImage(product) {
     })
     return product
 }
-
+/*
+function modifySauce(req, res) {
+    const { body, file } = req
+    const sauce = JSON.parse(body.sauce)
+    const { name, manufacturer, description, mainPepper, heat, userId } = sauce
+    const id = req.params.id
+    console.log({ body, file })
+    Product.findByIdAndUpdate(id, {name, manufacturer, description, mainPepper, heat, userId })  
+}
+*/
 
 function makeImageUrl(req, fileName) {
     return req.protocol + "://" + req.get("host") + "/image/" + fileName
@@ -85,5 +94,65 @@ function creatSauces(req, res) {
         .then((message) => res.status(201).send({ message }))
         .catch((err) => res.status(500).send(err))
 }
+
+function modifySauce(req, res) {
+    const {
+        params: { id }
+    } = req
+
+    console.log("req.file", req.file)
+    const hasNewImage = req.file != null
+
+    const payload = makePayLoad(hasNewImage, req)
+
+    Product.findByIdAndUpdate(id, payload)
+        .then((dbResponse) => sendClientResponse(dbResponse, res))
+        .then((product) => deleteImage(product))
+        .then((res) => console.log('file deleted', res))
+
+        .catch((err) => console.error("probleme update", err))
+}
+
+function deleteImage(product){
+    if (product == null) return
+    const imageToDelete = product.imageUrl.split("/").at(-1)
+    return unlink(`image/${imageToDelete}`)
+}
+
+function makePayLoad(hasNewImage, req) {
+    console.log("hasnewimage", hasNewImage)
+    if (!hasNewImage) return req.body
+    const payload = JSON.parse(req.body.sauce)
+    payload.imageUrl = makeImageUrl(req, req.file.fileName)
+    return payload
+}
+
+function sendClientResponse(product, res) {
+    if (product == null) {
+        console.log("nothing to update")
+        return res.status(404).send({ message: "objet non trouvé dans la base de données" })
+    }
+    console.log("all good, update", product)
+    return Promise.resolve(res.status(200).send({ message: "successfull update" }))
+        .then(() => product)
+}
+
+/*
+const hasNewImage = req.file != null
+const payLoad = makePayLoad(hasNewImage, req)
+Product.updateOne({ _id: req.params.id }, { ...req.body, _id: req.params.id }, payLoad)
+    .then(() => res.status(200).json({ message: 'Objet modifié !' }))
+    .catch(error => res.status(400).json({ error }));*/
+
+
+/*
+function makePayLoad(hasNewImage, req) {
+    if (!hasNewImage) return req.body
+    const payLoad = JSON.parse(req.body.sauce)
+    payLoad.imageUrl = makeImageUrl(req, req.file.fileName)
+    return payLoad
+}
+*/
 //Product.deleteMany({}).then(() => console.log("all removed"))
-module.exports = { getSauces, creatSauces, getSaucesById, DeleteSaucesById }
+module.exports = { getSauces, creatSauces, getSaucesById, DeleteSaucesById, modifySauce }
+

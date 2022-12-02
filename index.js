@@ -15,7 +15,7 @@ require("./mongo")
 
 // Controllers 
 const {createUser, logUser} = require("./controllers/users")
-const {getSauces, creatSauces, getSaucesById, DeleteSaucesById} = require("./controllers/sauces")
+const {getSauces, creatSauces, getSaucesById, DeleteSaucesById, modifySauce} = require("./controllers/sauces")
 //const {} = require("./controllers/sauces")
  
 //Middleware
@@ -42,7 +42,6 @@ const storage = multer.diskStorage({
   }
   const upload = multer ({ storage: storage})
 
-  app.use("/image", express.static(path.join(__dirname, "image")))
 
   // Routes 
 app.post("/api/auth/signup", createUser)
@@ -52,10 +51,13 @@ app.post('/api/sauces', authUser, upload.single("image"), creatSauces)
 app.get("/", (req, res) => res.send("Hello World"))
 app.get("/api/sauces/:id", authUser, getSaucesById)
 app.delete("/api/sauces/:id", authUser, DeleteSaucesById)
+//app.put('/api/sauces/:id', authUser,/* upload.single("image"),*/ modifySauce)
+app.put('/api/sauces/:id', authUser,upload.single("image"), modifySauce)
 
 
 //Listen
 
 
+app.use("/image", express.static(path.join(__dirname, "image")))
 app.listen(port, () => console.log("listening on port" + port))
 
