@@ -15,7 +15,7 @@ require("./mongo")
 
 // Controllers 
 const {createUser, logUser} = require("./controllers/users")
-const {getSauces, creatSauces, getSaucesById, DeleteSaucesById, modifySauce} = require("./controllers/sauces")
+const {sendClientResponse, getSauce, getSauces, createSauce, getSauceById, deleteSauce, modifySauce, likeSauce} = require("./controllers/sauces")
 //const {} = require("./controllers/sauces")
  
 //Middleware
@@ -46,13 +46,19 @@ const storage = multer.diskStorage({
   // Routes 
 app.post("/api/auth/signup", createUser)
 app.post("/api/auth/login", logUser)
-app.get("/api/sauces", authUser, getSauces)
-app.post('/api/sauces', authUser, upload.single("image"), creatSauces)
 app.get("/", (req, res) => res.send("Hello World"))
-app.get("/api/sauces/:id", authUser, getSaucesById)
-app.delete("/api/sauces/:id", authUser, DeleteSaucesById)
+
+
+app.get("/api/sauces", authUser, getSauces)
+app.post('/api/sauces', authUser, upload.single("image"), createSauce)
+app.get("/api/sauces/:id", authUser, getSauceById)
+app.delete("/api/sauces/:id", authUser, deleteSauce)
 //app.put('/api/sauces/:id', authUser,/* upload.single("image"),*/ modifySauce)
 app.put('/api/sauces/:id', authUser,upload.single("image"), modifySauce)
+app.post("/api/sauces/:id/like", authUser, likeSauce)
+
+
+
 
 
 //Listen
