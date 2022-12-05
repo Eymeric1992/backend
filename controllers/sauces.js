@@ -50,16 +50,26 @@ function modifySauce(req, res) {
 
     const hasNewImage = req.file != null
     const payload = makePayload(hasNewImage, req)
+    
+    const ObjUserId = payload.userId
+    console.log("userId de l'objet:", ObjUserId)
 
+    const bodyReq = JSON.parse(JSON.stringify(req.body))
+    console.log("VOICI le body de la requete:", JSON.parse(bodyReq.sauce))
 
-    Product.updateOne({ _id: req.params.id }, payload)
+    let userId = JSON.parse(bodyReq.sauce).userId
+    console.log("VOICI USERID de la requete:", userId)
+
+    if (userId === ObjUserId) {
+        Product.updateOne({ _id: req.params.id }, payload)
         .then((dbResponse) => sendClientResponse(dbResponse, res))
         .then((product) => deleteImage(product))
         .then((res) => console.log("FILE DELETED", res))
         .catch((err) => console.error("PROBLEM UPDATING", err))
+    }
 
+    return res.status(403).send({ message: "TU N'IRAS PAS PLUS LOIN" })
     //req.findUpd
-
 };
 
 function deleteImage(product) {
@@ -180,5 +190,6 @@ function incrementVote(product, userId, like) {
     like === 1 ? ++product.likes : ++product.dislikes
     return product
 }
+//Product.deleteMany({}).then(() => console.log("all removed"))
 
 module.exports = { sendClientResponse, getSauce, getSauces, createSauce, getSauceById, deleteSauce, modifySauce, likeSauce }
