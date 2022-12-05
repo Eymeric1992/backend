@@ -3,11 +3,10 @@ const uniqueValidator = require("mongoose-unique-validator")
 
 const password = process.env.DB_PASSWORD
 const username = process.env.DB_USER
-const uri =
-
-
+ const uri =
   `mongodb+srv://${username}:${password}@cluster0.cbpim0t.mongodb.net/?retryWrites=true&w=majority`
 
+  
 mongoose
   .connect(uri)
   .then(() => console.log("connected to mongo"))

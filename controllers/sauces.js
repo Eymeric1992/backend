@@ -1,7 +1,6 @@
 const mongoose = require("mongoose")
 const { unlink } = require("fs/promises")
 
-
 const productSchema = new mongoose.Schema({
     userId: String,
     name: String,
@@ -15,6 +14,7 @@ const productSchema = new mongoose.Schema({
     usersLiked: [String],
     usersDisliked: [String]
 })
+
 const Product = mongoose.model("Product", productSchema)
 
 function getSauces(req, res) {
@@ -51,31 +51,23 @@ function modifySauce(req, res) {
     const hasNewImage = req.file != null
     const payload = makePayload(hasNewImage, req)
 
-    Product.updateOne({ id }, payload)
+
+    Product.updateOne({ _id: req.params.id }, payload)
         .then((dbResponse) => sendClientResponse(dbResponse, res))
         .then((product) => deleteImage(product))
         .then((res) => console.log("FILE DELETED", res))
         .catch((err) => console.error("PROBLEM UPDATING", err))
+
+    //req.findUpd
+
 };
 
-
-
-
 function deleteImage(product) {
-    if (product == null) {
-        product.updateOne({ _id: req.params.id }, { ...req.body, _id: req.params.id })
-        .then(() => res.status(200).json({ message: 'Objet modifié !' }))
-        .catch(error => res.status(400).json({ error }));
-    }
-
+    if (product == null) return
     console.log("DELETE IMAGE", product)
     const imageToDelete = product.imageUrl.split("/").at(-1)
     return unlink("image/" + imageToDelete)
 }
-
-
-
-//HASNEWDESCRIPTION!!!!!
 
 function makePayload(hasNewImage, req) {
     console.log("hasNewImage:", hasNewImage)
@@ -99,6 +91,7 @@ function sendClientResponse(product, res) {
 function makeImageUrl(req, fileName) {
     return req.protocol + "://" + req.get("host") + "/image/" + fileName
 }
+
 function createSauce(req, res) {
     const { body, file } = req
     const { fileName } = file
@@ -124,31 +117,9 @@ function createSauce(req, res) {
         .catch((err) => res.status(500).send(err))
 }
 
-
-
-/*
-const hasNewImage = req.file != null
-const payLoad = makePayLoad(hasNewImage, req)
-Product.updateOne({ _id: req.params.id }, { ...req.body, _id: req.params.id }, payLoad)
-    .then(() => res.status(200).json({ message: 'Objet modifié !' }))
-    .catch(error => res.status(400).json({ error }));*/
-
-
-/*
-function makePayLoad(hasNewImage, req) {
-    if (!hasNewImage) return req.body
-    const payLoad = JSON.parse(req.body.sauce)
-    payLoad.imageUrl = makeImageUrl(req, req.file.fileName)
-    return payLoad
-}
-*/
-//Product.deleteMany({}).then(() => console.log("all removed"))
-
-
-
-
 function likeSauce(req, res) {
     const { like, userId } = req.body
+    //La méthode includes() determine si un tableau contient une valeur et renvoie true si c'est le cas, false sinon.
     if (![1, -1, 0].includes(like)) return res.status(403).send({ message: "Invalid like value" })
 
     getSauce(req, res)
@@ -165,11 +136,26 @@ function updateVote(product, like, userId, res) {
 
 function resetVote(product, userId, res) {
     const { usersLiked, usersDisliked } = product
+
+    //La méthode every() permet de tester si tous les éléments d'un tableau vérifient
+    // une condition donnée par une fonction en argument.
+    // Cette méthode renvoie un booléen pour le résultat du test.
+
+
+    //La méthode Promise.reject(raison) renvoie un objet Promise qui est rejeté
+    // (la promesse n'est pas tenue) à cause d'une raison donnée.
+
     if ([usersLiked, usersDisliked].every((arr) => arr.includes(userId)))
         return Promise.reject("User seems to have voted both ways")
 
+    //La méthode some() teste si au moins un élément du tableau passe le test implémenté 
+    //par la fonction fournie. Elle renvoie un booléen indiquant le résultat du test.
+
     if (![usersLiked, usersDisliked].some((arr) => arr.includes(userId)))
         return Promise.reject("User seems to not have voted")
+
+    //La méthode filter() crée et retourne un nouveau tableau contenant tous
+    // les éléments du tableau d'origine qui remplissent une condition déterminée par la fonction callback.
 
     if (usersLiked.includes(userId)) {
         --product.likes
@@ -178,15 +164,17 @@ function resetVote(product, userId, res) {
         --product.dislikes
         product.usersDisliked = product.usersDisliked.filter((id) => id !== userId)
     }
-
     return product
 }
 
 function incrementVote(product, userId, like) {
     const { usersLiked, usersDisliked } = product
-
+    // est ce que like est égal a 1 ? si oui on push dans usersliked sinon dans userdisliked
     const votersArray = like === 1 ? usersLiked : usersDisliked
     if (votersArray.includes(userId)) return product
+
+    //La méthode push() ajoute un ou plusieurs éléments à la fin d'un tableau 
+    //et retourne la nouvelle taille du tableau
     votersArray.push(userId)
 
     like === 1 ? ++product.likes : ++product.dislikes
