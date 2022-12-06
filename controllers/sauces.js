@@ -68,16 +68,16 @@ function modifySauce(req, res) {
             .catch((err) => console.error("PROBLEM UPDATING", err))
     }
 
-   // return res.status(403).send({ message: "TU N'IRAS PAS PLUS LOIN" })
+    //return res.status(403).send({ message: "TU N'IRAS PAS PLUS LOIN" })
     //req.findUpd
 };
 
 function deleteImage(product) {
     if (product == null) return
-    console.log("DELETE IMAGE", product)
-    const imageToDelete = product.imageUrl.split("image/")[1]
-    console.log("image to delete:", imageToDelete)
-  fs.unlink("image/" + imageToDelete,()=>{})
+const imageUrl = product.imageUrl
+   // console.log("IMAGE URL A SUPRIMER :", imageUrl)
+   const imageToDelete = imageUrl.split('/').at(-1);
+  fs.unlink(`image/${imageToDelete}`,()=>{})
 }
 
 function makePayload(hasNewImage, req) {
@@ -100,6 +100,7 @@ function sendClientResponse(product, res) {
 }
 
 function makeImageUrl(req, fileName) {
+    
     return req.protocol + "://" + req.get("host") + "/image/" + fileName
 }
 
