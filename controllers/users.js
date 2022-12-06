@@ -32,7 +32,7 @@ async function logUser(req, res) {
       res.status(403).send({ message: "Mot de passe incorrect" })
     }
     if (isPassWordOk) {
-      const token = createToken(email)
+      const token = createToken(user._id)
       res.status(200).send({ token: token, userId: user._id })
     }
   } catch (err) {
@@ -42,9 +42,9 @@ async function logUser(req, res) {
 
 }
 
-function createToken(email) {
+function createToken(userId) {
   const jwtPassword = process.env.JWT_PASSWORD
-  const token = jwt.sign({ email: email }, jwtPassword, { expiresIn: "24h" })
+  const token = jwt.sign({ userId: userId }, jwtPassword, { expiresIn: "24h" })
   return token
 }
 

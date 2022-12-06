@@ -1,5 +1,5 @@
 const mongoose = require("mongoose")
-const { unlink } = require("fs/promises")
+const fs = require("fs")
 
 const productSchema = new mongoose.Schema({
     userId: String,
@@ -39,8 +39,8 @@ function deleteSauce(req, res) {
     Product.findByIdAndDelete(id)
         .then((product) => sendClientResponse(product, res))
         .then((item) => deleteImage(item))
-        .then((res) => console.log("FILE DELETED", res))
-        .catch((err) => res.status(500).send({ message: err }))
+      //  .then((res) => console.log("FILE DELETED", res))
+        .catch(err => res.status(400).send({err}))
 }
 
 function modifySauce(req, res) {
@@ -50,33 +50,34 @@ function modifySauce(req, res) {
 
     const hasNewImage = req.file != null
     const payload = makePayload(hasNewImage, req)
-    
+
     const ObjUserId = payload.userId
     console.log("userId de l'objet:", ObjUserId)
 
     const bodyReq = JSON.parse(JSON.stringify(req.body))
-    console.log("VOICI le body de la requete:", JSON.parse(bodyReq.sauce))
+    //console.log("VOICI le body de la requete:", JSON.parse(bodyReq.sauce))
 
-    let userId = JSON.parse(bodyReq.sauce).userId
+    let userId = req.auth.userId     //JSON.parse(bodyReq.sauce).userId
     console.log("VOICI USERID de la requete:", userId)
 
     if (userId === ObjUserId) {
         Product.updateOne({ _id: req.params.id }, payload)
-        .then((dbResponse) => sendClientResponse(dbResponse, res))
-        .then((product) => deleteImage(product))
-        .then((res) => console.log("FILE DELETED", res))
-        .catch((err) => console.error("PROBLEM UPDATING", err))
+            .then((dbResponse) => sendClientResponse(dbResponse, res))
+            .then((product) => deleteImage(product))
+            .then((res) => console.log("FILE DELETED", res))
+            .catch((err) => console.error("PROBLEM UPDATING", err))
     }
 
-    return res.status(403).send({ message: "TU N'IRAS PAS PLUS LOIN" })
+   // return res.status(403).send({ message: "TU N'IRAS PAS PLUS LOIN" })
     //req.findUpd
 };
 
 function deleteImage(product) {
     if (product == null) return
     console.log("DELETE IMAGE", product)
-    const imageToDelete = product.imageUrl.split("/").at(-1)
-    return unlink("image/" + imageToDelete)
+    const imageToDelete = product.imageUrl.split("image/")[1]
+    console.log("image to delete:", imageToDelete)
+  fs.unlink("image/" + imageToDelete,()=>{})
 }
 
 function makePayload(hasNewImage, req) {
@@ -109,7 +110,7 @@ function createSauce(req, res) {
     const { name, manufacturer, description, mainPepper, heat, userId } = sauce
 
     const product = new Product({
-        userId: userId,
+        userId: req.auth.userId,
         name: name,
         manufacturer: manufacturer,
         description: description,
